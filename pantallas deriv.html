@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Chart Deriv - Modo Pro</title>
+    <style>
+        :root {
+            --bg-color: #0e0e0e;
+            --panel-bg: #15171a;
+            --accent-color: #ff444f;
+            --text-color: #ffffff;
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            font-family: sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        /* Barra de herramientas */
+        .toolbar {
+            height: 50px;
+            background-color: var(--panel-bg);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            border-bottom: 1px solid #333;
+            gap: 10px;
+            z-index: 100;
+            position: relative;
+        }
+
+        .btn-layout {
+            background: #2a2d32;
+            border: 1px solid #444;
+            color: white;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .btn-layout:hover { background: var(--accent-color); }
+        .btn-layout.active { background: var(--accent-color); border-color: white; }
+
+        /* Contenedor principal */
+        .chart-grid {
+            display: grid;
+            height: calc(100vh - 50px);
+            gap: 4px;
+            padding: 4px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        /* Layouts Dinámicos */
+        .layout-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+        .layout-2 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
+        .layout-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .layout-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+
+        /* Estilo de cada cuadro de gráfico */
+        .chart-container {
+            background: #000;
+            position: relative;
+            border: 1px solid #222;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Botón de expansión individual */
+        .expand-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            z-index: 10;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: 1px solid #555;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 10px;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+        .expand-btn:hover { background: #ff444f; }
+
+        iframe {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Clase para ocultar */
+        .hidden { display: none !important; }
+
+        /* Clase para maximizar cualquier gráfico */
+        .maximized {
+            grid-template-columns: 1fr !important;
+            grid-template-rows: 1fr !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar">
+        <span style="margin-right: 10px; font-weight: bold; color: #ff444f;">DERIV MULTI-VIEW</span>
+        <button class="btn-layout" id="btn1" onclick="setLayout(1)">1 Pantalla</button>
+        <button class="btn-layout" id="btn2" onclick="setLayout(2)">2 Pantallas</button>
+        <button class="btn-layout" id="btn3" onclick="setLayout(3)">3 Pantallas</button>
+        <button class="btn-layout active" id="btn4" onclick="setLayout(4)">4 Pantallas</button>
+        <span id="view-msg" style="font-size: 11px; color: #777; margin-left: 20px;"></span>
+    </div>
+
+    <div id="grid" class="chart-grid layout-4">
+        <div class="chart-container" id="c1">
+            <button class="expand-btn" onclick="maximizeChart(1)">Enfocar</button>
+            <iframe src="https://charts.deriv.com/deriv"></iframe>
+        </div>
+        <div class="chart-container" id="c2">
+            <button class="expand-btn" onclick="maximizeChart(2)">Enfocar</button>
+            <iframe src="https://charts.deriv.com/deriv"></iframe>
+        </div>
+        <div class="chart-container" id="c3">
+            <button class="expand-btn" onclick="maximizeChart(3)">Enfocar</button>
+            <iframe src="https://charts.deriv.com/deriv"></iframe>
+        </div>
+        <div class="chart-container" id="c4">
+            <button class="expand-btn" onclick="maximizeChart(4)">Enfocar</button>
+            <iframe src="https://charts.deriv.com/deriv"></iframe>
+        </div>
+    </div>
+
+    <script>
+        let currentLayout = 4;
+
+        function setLayout(num) {
+            currentLayout = num;
+            const grid = document.getElementById('grid');
+            const containers = document.querySelectorAll('.chart-container');
+            const buttons = document.querySelectorAll('.btn-layout');
+            
+            // Reset de clases
+            grid.classList.remove('maximized', 'layout-1', 'layout-2', 'layout-3', 'layout-4');
+            grid.classList.add('layout-' + num);
+            
+            // Actualizar botones
+            buttons.forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn' + num).classList.add('active');
+
+            // Mostrar/Ocultar
+            containers.forEach((container, index) => {
+                container.classList.remove('hidden');
+                if (index >= num) {
+                    container.classList.add('hidden');
+                }
+                // Cambiar texto del botón interno
+                container.querySelector('.expand-btn').innerText = "Enfocar";
+            });
+            
+            document.getElementById('view-msg').innerText = "";
+        }
+
+        function maximizeChart(id) {
+            const grid = document.getElementById('grid');
+            const containers = document.querySelectorAll('.chart-container');
+            const target = document.getElementById('c' + id);
+            const btn = target.querySelector('.expand-btn');
+
+            // Si ya está maximizado, volver al layout anterior
+            if (grid.classList.contains('maximized')) {
+                setLayout(currentLayout);
+            } else {
+                // Ocultar todos excepto el elegido
+                containers.forEach((container) => {
+                    if (container.id !== 'c' + id) {
+                        container.classList.add('hidden');
+                    }
+                });
+                grid.classList.add('maximized');
+                btn.innerText = "Volver a Mosaico";
+                document.getElementById('view-msg').innerText = "Vista individual: Activo " + id;
+            }
+        }
+
+        // Inicializar
+        setLayout(4);
+    </script>
+</body>
+</html>
